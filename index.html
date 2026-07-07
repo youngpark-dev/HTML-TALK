@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Project Tracker.xlsx</title>
+  <style>
+    :root {
+      --bg: #f3f2f1;
+      --panel: #ffffff;
+      --text: #242424;
+      --muted: #666666;
+      --line: #d0d7de;
+      --grid: #e5e5e5;
+      --head: #f3f6f4;
+      --excel: #107c41;
+      --excel-dark: #0e6f3a;
+      --selected: #e7f3ec;
+      --unread: #fff6d6;
+      --danger: #b00020;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: "Aptos", "Segoe UI", Arial, "Noto Sans KR", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    .app {
+      width: 100%;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+    }
+
+    .topbar {
+      height: 42px;
+      flex: 0 0 42px;
+      display: flex;
+      align-items: center;
+      padding: 0 12px;
+      background: var(--excel);
+      color: #fff;
+      gap: 12px;
+    }
+
+    .file-icon {
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255,255,255,0.75);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .file-title {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .save-state {
+      margin-left: auto;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .notify-pill {
+      border: 1px solid rgba(255,255,255,0.65);
+      background: rgba(255,255,255,0.12);
+      color: #fff;
+      height: 26px;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .notify-pill.enabled {
+      background: rgba(255,255,255,0.24);
+      border-color: rgba(255,255,255,0.9);
+      font-weight: 600;
+    }
+
+    .notify-pill.blocked,
+    .notify-pill:disabled {
+      opacity: 0.65;
+      cursor: default;
+    }
+
+    .ribbon {
+      height: 72px;
+      flex: 0 0 72px;
+      border-bottom: 1px solid var(--line);
+      background: #fafafa;
+    }
+
+    .tabs {
+      height: 30px;
+      display: flex;
+      align-items: end;
+      gap: 18px;
+      padding: 0 16px;
+      border-bottom: 1px solid #e6e6e6;
+      color: #333;
+      font-size: 12px;
+    }
+
+    .tab {
+      padding-bottom: 7px;
+    }
+
+    .tab.active {
+      color: var(--excel-dark);
+      font-weight: 600;
+      border-bottom: 2px solid var(--excel-dark);
+    }
+
+    .tools {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 14px;
+      color: #444;
+      overflow: hidden;
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 12px;
+      border-right: 1px solid #ddd;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .tool-btn {
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid #d6d6d6;
+      background: #fff;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      color: #333;
+      font: inherit;
+    }
+
+    button.tool-btn {
+      cursor: pointer;
+      color: #333;
+      font-weight: 400;
+    }
+
+    button.tool-btn.enabled {
+      border-color: var(--excel);
+      color: var(--excel-dark);
+      background: #edf7f1;
+    }
+
+    .formula {
+      height: 32px;
+      flex: 0 0 32px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .namebox {
+      width: 76px;
+      height: 100%;
+      border-right: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      font-size: 12px;
+    }
+
+    .fx {
+      width: 38px;
+      height: 100%;
+      border-right: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+      color: #777;
+    }
+
+    .formula-input {
+      flex: 1;
+      padding: 0 10px;
+      color: #555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .sheet-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+      position: relative;
+    }
+
+    table.sheet {
+      border-collapse: collapse;
+      min-width: 860px;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    .col-head th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      height: 26px;
+      background: var(--head);
+      border: 1px solid var(--grid);
+      color: #444;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .rownum {
+      width: 46px;
+      background: var(--head) !important;
+      text-align: center !important;
+      color: #555;
+      font-weight: 400 !important;
+    }
+
+    .sheet td {
+      height: 30px;
+      border: 1px solid var(--grid);
+      padding: 4px 8px;
+      vertical-align: middle;
+      background: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .header-row td {
+      background: #eef5ef;
+      font-weight: 600;
+      color: #1f5132;
+    }
+
+    .sheet tr.data-row:hover td:not(.rownum) {
+      background: #fafdfb;
+    }
+
+    .sheet tr.unread td:not(.rownum) {
+      background: var(--unread);
+    }
+
+    .sheet tr.unread .c-status::after {
+      content: "  •";
+      color: #c68500;
+      font-weight: 700;
+    }
+
+    .selected-cell {
+      outline: 2px solid var(--excel);
+      outline-offset: -2px;
+      background: var(--selected) !important;
+    }
+
+    .c-time { width: 96px; color: #555; }
+    .c-owner { width: 86px; color: #333; }
+    .c-status { width: 98px; color: #555; }
+    .c-memo { width: auto; }
+    .c-note { width: 150px; color: #777; }
+
+    .mine .c-owner::after { content: ""; }
+    .mine td:not(.rownum) { background: #fcfffd; }
+
+    .bottom-input {
+      flex: 0 0 auto;
+      border-top: 1px solid var(--line);
+      background: #f8f8f8;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 90px 1fr 68px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .input-label {
+      color: #555;
+      font-size: 12px;
+      text-align: right;
+      padding-right: 4px;
+    }
+
+    textarea {
+      width: 100%;
+      resize: none;
+      min-height: 32px;
+      max-height: 96px;
+      padding: 7px 9px;
+      border: 1px solid #bdbdbd;
+      border-radius: 0;
+      outline: none;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.35;
+      background: #fff;
+    }
+
+    textarea:focus {
+      border-color: var(--excel);
+      box-shadow: inset 0 0 0 1px var(--excel);
+    }
+
+    button {
+      height: 32px;
+      border: 1px solid var(--excel-dark);
+      background: var(--excel);
+      color: white;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .sheet-tabs {
+      height: 30px;
+      flex: 0 0 30px;
+      border-top: 1px solid var(--line);
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 10px;
+    }
+
+    .statusbar {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: #555;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      color: var(--excel-dark);
+      font-weight: 600;
+    }
+
+    .sheet-tab {
+      height: 24px;
+      padding: 4px 14px;
+      background: #fff;
+      border: 1px solid #d6d6d6;
+      border-bottom: 2px solid var(--excel);
+      color: #222;
+      font-size: 12px;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.28);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 10;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 360px;
+      background: white;
+      border: 1px solid #c8c8c8;
+      padding: 18px;
+      box-shadow: 0 16px 42px rgba(0,0,0,0.24);
+    }
+
+    .modal h1 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .modal p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .modal input {
+      width: 100%;
+      height: 36px;
+      border: 1px solid #bdbdbd;
+      padding: 0 9px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .modal button { width: 100%; }
+
+    .error {
+      color: var(--danger);
+      font-size: 12px;
+      margin-top: 8px;
+      display: none;
+    }
+
+    .help {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 640px) {
+      .ribbon { display: none; }
+      .formula { height: 30px; flex-basis: 30px; }
+      .bottom-input { grid-template-columns: 1fr 60px; }
+      .input-label { display: none; }
+      table.sheet { min-width: 720px; }
+      .save-state { display: none; }
+      .notify-pill { margin-left: auto; padding: 0 8px; font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="file-icon">X</div>
+      <div class="file-title">Project Tracker.xlsx</div>
+      <div class="save-state" id="status">연결 중</div>
+      <button class="notify-pill" id="notifyBtnTop" type="button" title="브라우저 알림 설정">Notifications Off</button>
+    </div>
+
+    <div class="ribbon">
+      <div class="tabs">
+        <div class="tab active">Home</div>
+        <div class="tab">Insert</div>
+        <div class="tab">Data</div>
+        <div class="tab">Review</div>
+        <div class="tab">View</div>
+      </div>
+      <div class="tools">
+        <div class="tool-group"><span class="tool-btn">Paste</span><span>Clipboard</span></div>
+        <div class="tool-group"><span class="tool-btn">Calibri</span><span class="tool-btn">11</span></div>
+        <div class="tool-group"><span class="tool-btn">B</span><span class="tool-btn">I</span><span class="tool-btn">U</span></div>
+        <div class="tool-group"><span class="tool-btn">Sort</span><span class="tool-btn">Filter</span></div>
+        <div class="tool-group"><button class="tool-btn" id="notifyBtn" type="button">Notifications Off</button><span>Alerts</span></div>
+      </div>
+    </div>
+
+    <div class="formula">
+      <div class="namebox" id="namebox">D2</div>
+      <div class="fx">fx</div>
+      <div class="formula-input" id="formulaInput">=PROJECT_STATUS_LOG</div>
+    </div>
+
+    <main class="sheet-wrap" id="messages">
+      <table class="sheet">
+        <thead class="col-head">
+          <tr>
+            <th class="rownum"></th>
+            <th class="c-time">A</th>
+            <th class="c-owner">B</th>
+            <th class="c-status">C</th>
+            <th class="c-memo">D</th>
+            <th class="c-note">E</th>
+          </tr>
+        </thead>
+        <tbody id="sheetBody">
+          <tr class="header-row">
+            <td class="rownum">1</td>
+            <td>Time</td>
+            <td>Owner</td>
+            <td>Status</td>
+            <td>Description</td>
+            <td>Updated</td>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+
+    <form class="bottom-input" id="form">
+      <div class="input-label">D<span id="nextRowNo">2</span></div>
+      <textarea id="input" rows="1" placeholder="셀 값 입력" autocomplete="off"></textarea>
+      <button id="send" type="submit">Enter</button>
+    </form>
+
+    <div class="sheet-tabs">
+      <div class="sheet-tab">Daily Log</div>
+      <div class="statusbar">
+        <span id="readyStatus">Ready</span>
+        <span id="unreadStatus">No new updates</span>
+        <span id="syncStatus">Last Sync --:--</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <h1>사용자 설정</h1>
+      <p>Owner 열에 표시될 이름을 입력하세요. 처음 한 번만 저장됩니다.</p>
+      <input id="nameInput" type="text" placeholder="예: JP / SM" maxlength="20" />
+      <button id="saveName" type="button">확인</button>
+      <div class="error" id="nameError">이름을 입력하세요.</div>
+      <div class="help">브라우저에만 저장됩니다. 변경하려면 시크릿 모드로 접속하거나 localStorage의 htmlTalkName 값을 삭제하세요.</div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import {
+      getDatabase,
+      ref,
+      push,
+      onChildAdded,
+      serverTimestamp,
+      query,
+      limitToLast,
+      onValue,
+      set,
+      onDisconnect
+    } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDzsDedywZPd21zCddKeYU2lPkCZekrhto",
+      authDomain: "html-talk.firebaseapp.com",
+      databaseURL: "https://html-talk-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "html-talk",
+      storageBucket: "html-talk.firebasestorage.app",
+      messagingSenderId: "166321255139",
+      appId: "1:166321255139:web:436f1a0784981fee2f0bd6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const messagesEl = document.getElementById("messages");
+    const sheetBody = document.getElementById("sheetBody");
+    const formEl = document.getElementById("form");
+    const inputEl = document.getElementById("input");
+    const sendEl = document.getElementById("send");
+    const statusEl = document.getElementById("status");
+    const modalBackdrop = document.getElementById("modalBackdrop");
+    const nameInput = document.getElementById("nameInput");
+    const saveNameBtn = document.getElementById("saveName");
+    const nameError = document.getElementById("nameError");
+    const nextRowNo = document.getElementById("nextRowNo");
+    const namebox = document.getElementById("namebox");
+    const formulaInput = document.getElementById("formulaInput");
+    const notifyBtn = document.getElementById("notifyBtn");
+    const notifyBtnTop = document.getElementById("notifyBtnTop");
+    const readyStatus = document.getElementById("readyStatus");
+    const unreadStatus = document.getElementById("unreadStatus");
+    const syncStatus = document.getElementById("syncStatus");
+
+    const ROOM_ID = "main";
+    const CLIENT_ID_KEY = "htmlTalkClientId";
+    const NAME_KEY = "htmlTalkName";
+
+    const ORIGINAL_TITLE = "Project Tracker.xlsx";
+    document.title = ORIGINAL_TITLE;
+
+    let rowCount = 1;
+    let unreadCount = 0;
+    let initialLoadDone = false;
+    const sessionStartedAt = Date.now();
+
+    let clientId = localStorage.getItem(CLIENT_ID_KEY);
+    if (!clientId) {
+      clientId = crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2);
+      localStorage.setItem(CLIENT_ID_KEY, clientId);
+    }
+
+    let userName = localStorage.getItem(NAME_KEY) || "";
+
+    function showNameModal() {
+      modalBackdrop.style.display = "flex";
+      setTimeout(() => nameInput.focus(), 50);
+    }
+
+    function hideNameModal() {
+      modalBackdrop.style.display = "none";
+    }
+
+    function saveName() {
+      const value = nameInput.value.trim();
+      if (!value) {
+        nameError.style.display = "block";
+        return;
+      }
+      userName = value;
+      localStorage.setItem(NAME_KEY, userName);
+      hideNameModal();
+      setPresence();
+    }
+
+    if (!userName) showNameModal();
+
+    saveNameBtn.addEventListener("click", saveName);
+    nameInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") saveName();
+    });
+
+    function updateSyncTime() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, "0");
+      const mm = String(now.getMinutes()).padStart(2, "0");
+      syncStatus.textContent = `Last Sync ${hh}:${mm}`;
+    }
+
+    function updateUnreadUI() {
+      if (unreadCount > 0) {
+        document.title = `(${unreadCount}) ${ORIGINAL_TITLE}`;
+        unreadStatus.textContent = `${unreadCount} New Update${unreadCount > 1 ? "s" : ""}`;
+        unreadStatus.className = "status-pill";
+      } else {
+        document.title = ORIGINAL_TITLE;
+        unreadStatus.textContent = "No new updates";
+        unreadStatus.className = "";
+      }
+    }
+
+    function clearUnread() {
+      unreadCount = 0;
+      updateUnreadUI();
+      sheetBody.querySelectorAll("tr.unread").forEach((row) => row.classList.remove("unread"));
+    }
+
+    function maybeNotify(msg) {
+      const isMine = msg.clientId === clientId;
+      const isFresh = !msg.createdAt || msg.createdAt >= sessionStartedAt - 3000;
+      if (isMine || !initialLoadDone || !document.hidden || !isFresh) return;
+
+      unreadCount += 1;
+      updateUnreadUI();
+
+      if ("Notification" in window && Notification.permission === "granted") {
+        try {
+          new Notification("Project Tracker", {
+            body: "1 new update received",
+            silent: true
+          });
+        } catch (err) {
+          console.warn("Notification failed", err);
+        }
+      }
+    }
+
+    const notifyButtons = [notifyBtn, notifyBtnTop].filter(Boolean);
+
+    function setNotifyButtonState(state) {
+      notifyButtons.forEach((btn) => {
+        btn.classList.remove("enabled", "blocked");
+        btn.disabled = false;
+
+        if (state === "unsupported") {
+          btn.textContent = "Notifications N/A";
+          btn.disabled = true;
+          btn.classList.add("blocked");
+        } else if (state === "granted") {
+          btn.textContent = "Notifications On";
+          btn.classList.add("enabled");
+        } else if (state === "denied") {
+          btn.textContent = "Notifications Blocked";
+          btn.disabled = true;
+          btn.classList.add("blocked");
+          btn.title = "브라우저 주소창 왼쪽 사이트 설정에서 알림을 허용해야 합니다.";
+        } else {
+          btn.textContent = "Notifications Off";
+          btn.title = "클릭하면 브라우저 알림 권한을 요청합니다.";
+        }
+      });
+    }
+
+    function refreshNotifyState() {
+      if (!("Notification" in window)) {
+        setNotifyButtonState("unsupported");
+      } else {
+        setNotifyButtonState(Notification.permission);
+      }
+    }
+
+    async function requestNotifications() {
+      if (!("Notification" in window)) return;
+      if (Notification.permission === "granted" || Notification.permission === "denied") {
+        refreshNotifyState();
+        return;
+      }
+      const permission = await Notification.requestPermission();
+      setNotifyButtonState(permission);
+      if (permission === "granted") {
+        try {
+          new Notification("Project Tracker", {
+            body: "Notifications enabled",
+            silent: true
+          });
+        } catch (err) {
+          console.warn("Notification test failed", err);
+        }
+      }
+    }
+
+    refreshNotifyState();
+    notifyButtons.forEach((btn) => btn.addEventListener("click", requestNotifications));
+
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden) clearUnread();
+    });
+
+    window.addEventListener("focus", clearUnread);
+
+    const connectedRef = ref(db, ".info/connected");
+    onValue(connectedRef, (snap) => {
+      const connected = !!snap.val();
+      statusEl.textContent = connected ? "Saved to cloud" : "Offline";
+      readyStatus.textContent = connected ? "Ready" : "Offline";
+      updateSyncTime();
+    });
+
+    function setPresence() {
+      if (!userName) return;
+      const userRef = ref(db, `rooms/${ROOM_ID}/presence/${clientId}`);
+      set(userRef, {
+        name: userName,
+        online: true,
+        updatedAt: serverTimestamp()
+      });
+      onDisconnect(userRef).set({
+        name: userName,
+        online: false,
+        updatedAt: serverTimestamp()
+      });
+    }
+
+    setPresence();
+
+    const messagesRef = ref(db, `rooms/${ROOM_ID}/messages`);
+    const recentMessagesQuery = query(messagesRef, limitToLast(200));
+
+    function formatTime(timestamp) {
+      if (!timestamp) return "";
+      const d = new Date(timestamp);
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      return `${hh}:${mm}`;
+    }
+
+    function formatUpdated(timestamp) {
+      if (!timestamp) return "";
+      const d = new Date(timestamp);
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${mm}/${dd}`;
+    }
+
+    function scrollToBottom() {
+      requestAnimationFrame(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+      });
+    }
+
+    function addMessage(msg) {
+      const isMine = msg.clientId === clientId;
+      rowCount += 1;
+
+      const tr = document.createElement("tr");
+      const shouldHighlight = !isMine && document.hidden && initialLoadDone;
+      tr.className = `data-row ${isMine ? "mine" : "other"}${shouldHighlight ? " unread" : ""}`;
+
+      const rowNum = document.createElement("td");
+      rowNum.className = "rownum";
+      rowNum.textContent = rowCount;
+
+      const time = document.createElement("td");
+      time.className = "c-time";
+      time.textContent = formatTime(msg.createdAt);
+
+      const owner = document.createElement("td");
+      owner.className = "c-owner";
+      owner.textContent = msg.name || "Owner";
+
+      const status = document.createElement("td");
+      status.className = "c-status";
+      status.textContent = "Normal";
+
+      const memo = document.createElement("td");
+      memo.className = "c-memo selected-cell";
+      memo.textContent = msg.text || "";
+      memo.title = msg.text || "";
+
+      const updated = document.createElement("td");
+      updated.className = "c-note";
+      updated.textContent = formatUpdated(msg.createdAt);
+
+      tr.appendChild(rowNum);
+      tr.appendChild(time);
+      tr.appendChild(owner);
+      tr.appendChild(status);
+      tr.appendChild(memo);
+      tr.appendChild(updated);
+
+      const previousSelected = sheetBody.querySelector(".selected-cell");
+      if (previousSelected) previousSelected.classList.remove("selected-cell");
+
+      sheetBody.appendChild(tr);
+      nextRowNo.textContent = rowCount + 1;
+      namebox.textContent = `D${rowCount}`;
+      formulaInput.textContent = msg.text ? `=${JSON.stringify(msg.text)}` : "";
+      scrollToBottom();
+      updateSyncTime();
+    }
+
+    onChildAdded(recentMessagesQuery, (snapshot) => {
+      const msg = snapshot.val();
+      addMessage(msg);
+      maybeNotify(msg);
+    });
+
+    setTimeout(() => {
+      initialLoadDone = true;
+    }, 1500);
+
+    async function sendMessage() {
+      if (!userName) {
+        showNameModal();
+        return;
+      }
+
+      const text = inputEl.value.trim();
+      if (!text) return;
+
+      sendEl.disabled = true;
+      try {
+        await push(messagesRef, {
+          clientId,
+          name: userName,
+          text,
+          createdAt: serverTimestamp()
+        });
+        inputEl.value = "";
+        resizeTextarea();
+      } catch (err) {
+        alert("입력값 저장에 실패했습니다. Firebase 규칙 또는 인터넷 연결을 확인하세요.");
+        console.error(err);
+      } finally {
+        sendEl.disabled = false;
+        inputEl.focus();
+      }
+    }
+
+    formEl.addEventListener("submit", (e) => {
+      e.preventDefault();
+      sendMessage();
+    });
+
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    function resizeTextarea() {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 96) + "px";
+    }
+
+    inputEl.addEventListener("input", resizeTextarea);
+  </script>
+</body>
+</html>
