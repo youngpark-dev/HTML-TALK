@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>HTML TALK</title>
+  <title>Project Tracker</title>
   <style>
     :root {
-      --bg: #f4f5f7;
+      --bg: #f3f2f1;
       --panel: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --line: #e5e7eb;
-      --mine: #2563eb;
-      --mine-text: #ffffff;
-      --other: #ffffff;
-      --other-text: #111827;
-      --danger: #dc2626;
+      --text: #242424;
+      --muted: #666666;
+      --line: #d0d7de;
+      --grid: #e5e5e5;
+      --head: #f3f6f4;
+      --excel: #107c41;
+      --excel-dark: #0e6f3a;
+      --selected: #e7f3ec;
+      --danger: #b00020;
     }
 
     * { box-sizing: border-box; }
@@ -24,171 +25,297 @@
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans KR", Arial, sans-serif;
+      font-family: "Aptos", "Segoe UI", Arial, "Noto Sans KR", sans-serif;
       background: var(--bg);
       color: var(--text);
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
+      font-size: 13px;
     }
 
     .app {
       width: 100%;
-      max-width: 520px;
       height: 100dvh;
-      background: var(--panel);
       display: flex;
       flex-direction: column;
-      border-left: 1px solid var(--line);
-      border-right: 1px solid var(--line);
+      background: #fff;
     }
 
-    header {
-      height: 58px;
-      flex: 0 0 58px;
-      padding: 0 16px;
+    .topbar {
+      height: 42px;
+      flex: 0 0 42px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      padding: 0 12px;
+      background: var(--excel);
+      color: #fff;
+      gap: 12px;
+    }
+
+    .file-icon {
+      width: 22px;
+      height: 22px;
+      border: 1px solid rgba(255,255,255,0.75);
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      font-size: 12px;
+    }
+
+    .file-title {
+      font-weight: 600;
+      font-size: 14px;
+      white-space: nowrap;
+    }
+
+    .save-state {
+      margin-left: auto;
+      font-size: 12px;
+      opacity: 0.9;
+    }
+
+    .ribbon {
+      height: 72px;
+      flex: 0 0 72px;
       border-bottom: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.96);
-      backdrop-filter: blur(10px);
+      background: #fafafa;
     }
 
-    .title {
-      font-weight: 750;
-      font-size: 17px;
-      letter-spacing: -0.2px;
-    }
-
-    .status {
+    .tabs {
+      height: 30px;
+      display: flex;
+      align-items: end;
+      gap: 18px;
+      padding: 0 16px;
+      border-bottom: 1px solid #e6e6e6;
+      color: #333;
       font-size: 12px;
-      color: var(--muted);
-      white-space: nowrap;
     }
 
-    .messages {
+    .tab {
+      padding-bottom: 7px;
+    }
+
+    .tab.active {
+      color: var(--excel-dark);
+      font-weight: 600;
+      border-bottom: 2px solid var(--excel-dark);
+    }
+
+    .tools {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 7px 14px;
+      color: #444;
+      overflow: hidden;
+    }
+
+    .tool-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding-right: 12px;
+      border-right: 1px solid #ddd;
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .tool-btn {
+      height: 24px;
+      padding: 0 8px;
+      border: 1px solid #d6d6d6;
+      background: #fff;
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      color: #333;
+    }
+
+    .formula {
+      height: 32px;
+      flex: 0 0 32px;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .namebox {
+      width: 76px;
+      height: 100%;
+      border-right: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #555;
+      font-size: 12px;
+    }
+
+    .fx {
+      width: 38px;
+      height: 100%;
+      border-right: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+      color: #777;
+    }
+
+    .formula-input {
       flex: 1;
-      overflow-y: auto;
-      padding: 14px 12px 18px;
-      background: linear-gradient(#f8fafc, #f4f5f7);
+      padding: 0 10px;
+      color: #555;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    .day {
+    .sheet-wrap {
+      flex: 1;
+      overflow: auto;
+      background: #fff;
+      position: relative;
+    }
+
+    table.sheet {
+      border-collapse: collapse;
+      min-width: 860px;
+      width: 100%;
+      table-layout: fixed;
+    }
+
+    .col-head th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      height: 26px;
+      background: var(--head);
+      border: 1px solid var(--grid);
+      color: #444;
+      font-weight: 500;
       text-align: center;
-      color: var(--muted);
-      font-size: 12px;
-      margin: 10px 0 14px;
     }
 
-    .row {
-      display: flex;
-      margin: 8px 0;
-      gap: 7px;
-      align-items: flex-end;
+    .rownum {
+      width: 46px;
+      background: var(--head) !important;
+      text-align: center !important;
+      color: #555;
+      font-weight: 400 !important;
     }
 
-    .row.mine {
-      justify-content: flex-end;
-    }
-
-    .row.other {
-      justify-content: flex-start;
-    }
-
-    .bubble-wrap {
-      max-width: 76%;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .name {
-      font-size: 12px;
-      color: var(--muted);
-      margin: 0 0 3px 2px;
-    }
-
-    .bubble {
-      padding: 10px 12px;
-      border-radius: 17px;
-      line-height: 1.42;
-      font-size: 15px;
-      word-break: break-word;
-      white-space: pre-wrap;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-    }
-
-    .mine .bubble {
-      background: var(--mine);
-      color: var(--mine-text);
-      border-bottom-right-radius: 5px;
-    }
-
-    .other .bubble {
-      background: var(--other);
-      color: var(--other-text);
-      border: 1px solid var(--line);
-      border-bottom-left-radius: 5px;
-    }
-
-    .time {
-      font-size: 11px;
-      color: var(--muted);
-      margin-bottom: 2px;
+    .sheet td {
+      height: 30px;
+      border: 1px solid var(--grid);
+      padding: 4px 8px;
+      vertical-align: middle;
+      background: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
       white-space: nowrap;
     }
 
-    .composer {
+    .header-row td {
+      background: #eef5ef;
+      font-weight: 600;
+      color: #1f5132;
+    }
+
+    .sheet tr.data-row:hover td:not(.rownum) {
+      background: #fafdfb;
+    }
+
+    .selected-cell {
+      outline: 2px solid var(--excel);
+      outline-offset: -2px;
+      background: var(--selected) !important;
+    }
+
+    .c-time { width: 96px; color: #555; }
+    .c-owner { width: 86px; color: #333; }
+    .c-status { width: 98px; color: #555; }
+    .c-memo { width: auto; }
+    .c-note { width: 150px; color: #777; }
+
+    .mine .c-owner::after { content: ""; }
+    .mine td:not(.rownum) { background: #fcfffd; }
+
+    .bottom-input {
       flex: 0 0 auto;
-      display: flex;
-      gap: 8px;
-      padding: 10px 10px calc(10px + env(safe-area-inset-bottom));
       border-top: 1px solid var(--line);
-      background: rgba(255,255,255,0.98);
+      background: #f8f8f8;
+      padding: 8px 10px calc(8px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: 90px 1fr 68px;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .input-label {
+      color: #555;
+      font-size: 12px;
+      text-align: right;
+      padding-right: 4px;
     }
 
     textarea {
-      flex: 1;
+      width: 100%;
       resize: none;
-      min-height: 44px;
-      max-height: 120px;
-      padding: 11px 12px;
-      border: 1px solid var(--line);
-      border-radius: 14px;
+      min-height: 32px;
+      max-height: 96px;
+      padding: 7px 9px;
+      border: 1px solid #bdbdbd;
+      border-radius: 0;
       outline: none;
       font-family: inherit;
-      font-size: 15px;
+      font-size: 13px;
       line-height: 1.35;
-      background: #ffffff;
+      background: #fff;
     }
 
     textarea:focus {
-      border-color: #93c5fd;
-      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+      border-color: var(--excel);
+      box-shadow: inset 0 0 0 1px var(--excel);
     }
 
     button {
-      width: 68px;
-      border: none;
-      border-radius: 14px;
-      background: var(--mine);
+      height: 32px;
+      border: 1px solid var(--excel-dark);
+      background: var(--excel);
       color: white;
-      font-weight: 700;
-      font-size: 14px;
+      font-weight: 600;
+      font-size: 12px;
       cursor: pointer;
     }
 
-    button:disabled {
-      opacity: 0.45;
-      cursor: not-allowed;
+    button:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .sheet-tabs {
+      height: 30px;
+      flex: 0 0 30px;
+      border-top: 1px solid var(--line);
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 0 10px;
+    }
+
+    .sheet-tab {
+      height: 24px;
+      padding: 4px 14px;
+      background: #fff;
+      border: 1px solid #d6d6d6;
+      border-bottom: 2px solid var(--excel);
+      color: #222;
+      font-size: 12px;
     }
 
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(17,24,39,0.35);
+      background: rgba(0,0,0,0.28);
       display: none;
       align-items: center;
       justify-content: center;
@@ -198,84 +325,135 @@
 
     .modal {
       width: 100%;
-      max-width: 420px;
+      max-width: 360px;
       background: white;
-      border-radius: 20px;
-      padding: 22px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      border: 1px solid #c8c8c8;
+      padding: 18px;
+      box-shadow: 0 16px 42px rgba(0,0,0,0.24);
     }
 
     .modal h1 {
       margin: 0 0 8px;
-      font-size: 22px;
-      letter-spacing: -0.4px;
+      font-size: 18px;
+      font-weight: 600;
     }
 
     .modal p {
-      margin: 0 0 16px;
+      margin: 0 0 14px;
       color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
+      font-size: 13px;
+      line-height: 1.45;
     }
 
     .modal input {
       width: 100%;
-      height: 46px;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 0 12px;
-      font-size: 16px;
+      height: 36px;
+      border: 1px solid #bdbdbd;
+      padding: 0 9px;
+      font-size: 14px;
       margin-bottom: 10px;
     }
 
-    .modal button {
-      width: 100%;
-      height: 46px;
-      border-radius: 12px;
-    }
+    .modal button { width: 100%; }
 
     .error {
       color: var(--danger);
-      font-size: 13px;
+      font-size: 12px;
       margin-top: 8px;
       display: none;
     }
 
     .help {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
       margin-top: 10px;
-      line-height: 1.5;
+      line-height: 1.45;
+    }
+
+    @media (max-width: 640px) {
+      .ribbon { display: none; }
+      .formula { height: 30px; flex-basis: 30px; }
+      .bottom-input { grid-template-columns: 1fr 60px; }
+      .input-label { display: none; }
+      table.sheet { min-width: 720px; }
+      .save-state { display: none; }
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <header>
-      <div>
-        <div class="title">HTML TALK</div>
-      </div>
-      <div class="status" id="status">연결 중</div>
-    </header>
+    <div class="topbar">
+      <div class="file-icon">X</div>
+      <div class="file-title">Project Tracker.xlsx</div>
+      <div class="save-state" id="status">연결 중</div>
+    </div>
 
-    <main class="messages" id="messages">
-      <div class="day">대화를 시작하세요</div>
+    <div class="ribbon">
+      <div class="tabs">
+        <div class="tab active">Home</div>
+        <div class="tab">Insert</div>
+        <div class="tab">Data</div>
+        <div class="tab">Review</div>
+        <div class="tab">View</div>
+      </div>
+      <div class="tools">
+        <div class="tool-group"><span class="tool-btn">Paste</span><span>Clipboard</span></div>
+        <div class="tool-group"><span class="tool-btn">Calibri</span><span class="tool-btn">11</span></div>
+        <div class="tool-group"><span class="tool-btn">B</span><span class="tool-btn">I</span><span class="tool-btn">U</span></div>
+        <div class="tool-group"><span class="tool-btn">Sort</span><span class="tool-btn">Filter</span></div>
+      </div>
+    </div>
+
+    <div class="formula">
+      <div class="namebox" id="namebox">D2</div>
+      <div class="fx">fx</div>
+      <div class="formula-input" id="formulaInput">=PROJECT_STATUS_LOG</div>
+    </div>
+
+    <main class="sheet-wrap" id="messages">
+      <table class="sheet">
+        <thead class="col-head">
+          <tr>
+            <th class="rownum"></th>
+            <th class="c-time">A</th>
+            <th class="c-owner">B</th>
+            <th class="c-status">C</th>
+            <th class="c-memo">D</th>
+            <th class="c-note">E</th>
+          </tr>
+        </thead>
+        <tbody id="sheetBody">
+          <tr class="header-row">
+            <td class="rownum">1</td>
+            <td>Time</td>
+            <td>Owner</td>
+            <td>Status</td>
+            <td>Description</td>
+            <td>Updated</td>
+          </tr>
+        </tbody>
+      </table>
     </main>
 
-    <form class="composer" id="form">
-      <textarea id="input" rows="1" placeholder="메시지 입력" autocomplete="off"></textarea>
-      <button id="send" type="submit">전송</button>
+    <form class="bottom-input" id="form">
+      <div class="input-label">D<span id="nextRowNo">2</span></div>
+      <textarea id="input" rows="1" placeholder="셀 값 입력" autocomplete="off"></textarea>
+      <button id="send" type="submit">Enter</button>
     </form>
+
+    <div class="sheet-tabs">
+      <div class="sheet-tab">Daily Log</div>
+    </div>
   </div>
 
   <div class="modal-backdrop" id="modalBackdrop">
     <div class="modal">
-      <h1>이름 설정</h1>
-      <p>처음 한 번만 입력하면 이 브라우저에 저장됩니다.</p>
-      <input id="nameInput" type="text" placeholder="예: 준영 / 수민" maxlength="20" />
-      <button id="saveName" type="button">시작하기</button>
+      <h1>사용자 설정</h1>
+      <p>Owner 열에 표시될 이름을 입력하세요. 처음 한 번만 저장됩니다.</p>
+      <input id="nameInput" type="text" placeholder="예: JP / SM" maxlength="20" />
+      <button id="saveName" type="button">확인</button>
       <div class="error" id="nameError">이름을 입력하세요.</div>
-      <div class="help">나중에 이름을 바꾸려면 브라우저 개발자도구에서 localStorage의 htmlTalkName 값을 삭제하거나, 시크릿 모드로 접속하면 됩니다.</div>
+      <div class="help">브라우저에만 저장됩니다. 변경하려면 시크릿 모드로 접속하거나 localStorage의 htmlTalkName 값을 삭제하세요.</div>
     </div>
   </div>
 
@@ -308,6 +486,7 @@
     const db = getDatabase(app);
 
     const messagesEl = document.getElementById("messages");
+    const sheetBody = document.getElementById("sheetBody");
     const formEl = document.getElementById("form");
     const inputEl = document.getElementById("input");
     const sendEl = document.getElementById("send");
@@ -316,10 +495,15 @@
     const nameInput = document.getElementById("nameInput");
     const saveNameBtn = document.getElementById("saveName");
     const nameError = document.getElementById("nameError");
+    const nextRowNo = document.getElementById("nextRowNo");
+    const namebox = document.getElementById("namebox");
+    const formulaInput = document.getElementById("formulaInput");
 
     const ROOM_ID = "main";
     const CLIENT_ID_KEY = "htmlTalkClientId";
     const NAME_KEY = "htmlTalkName";
+
+    let rowCount = 1;
 
     let clientId = localStorage.getItem(CLIENT_ID_KEY);
     if (!clientId) {
@@ -359,7 +543,7 @@
 
     const connectedRef = ref(db, ".info/connected");
     onValue(connectedRef, (snap) => {
-      statusEl.textContent = snap.val() ? "온라인" : "오프라인";
+      statusEl.textContent = snap.val() ? "Saved to cloud" : "Offline";
     });
 
     function setPresence() {
@@ -390,6 +574,14 @@
       return `${hh}:${mm}`;
     }
 
+    function formatUpdated(timestamp) {
+      if (!timestamp) return "";
+      const d = new Date(timestamp);
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${mm}/${dd}`;
+    }
+
     function scrollToBottom() {
       requestAnimationFrame(() => {
         messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -398,37 +590,50 @@
 
     function addMessage(msg) {
       const isMine = msg.clientId === clientId;
-      const row = document.createElement("div");
-      row.className = `row ${isMine ? "mine" : "other"}`;
+      rowCount += 1;
 
-      const bubbleWrap = document.createElement("div");
-      bubbleWrap.className = "bubble-wrap";
+      const tr = document.createElement("tr");
+      tr.className = `data-row ${isMine ? "mine" : "other"}`;
 
-      if (!isMine) {
-        const name = document.createElement("div");
-        name.className = "name";
-        name.textContent = msg.name || "상대";
-        bubbleWrap.appendChild(name);
-      }
+      const rowNum = document.createElement("td");
+      rowNum.className = "rownum";
+      rowNum.textContent = rowCount;
 
-      const bubble = document.createElement("div");
-      bubble.className = "bubble";
-      bubble.textContent = msg.text || "";
-      bubbleWrap.appendChild(bubble);
-
-      const time = document.createElement("div");
-      time.className = "time";
+      const time = document.createElement("td");
+      time.className = "c-time";
       time.textContent = formatTime(msg.createdAt);
 
-      if (isMine) {
-        row.appendChild(time);
-        row.appendChild(bubbleWrap);
-      } else {
-        row.appendChild(bubbleWrap);
-        row.appendChild(time);
-      }
+      const owner = document.createElement("td");
+      owner.className = "c-owner";
+      owner.textContent = msg.name || "Owner";
 
-      messagesEl.appendChild(row);
+      const status = document.createElement("td");
+      status.className = "c-status";
+      status.textContent = "Normal";
+
+      const memo = document.createElement("td");
+      memo.className = "c-memo selected-cell";
+      memo.textContent = msg.text || "";
+      memo.title = msg.text || "";
+
+      const updated = document.createElement("td");
+      updated.className = "c-note";
+      updated.textContent = formatUpdated(msg.createdAt);
+
+      tr.appendChild(rowNum);
+      tr.appendChild(time);
+      tr.appendChild(owner);
+      tr.appendChild(status);
+      tr.appendChild(memo);
+      tr.appendChild(updated);
+
+      const previousSelected = sheetBody.querySelector(".selected-cell");
+      if (previousSelected) previousSelected.classList.remove("selected-cell");
+
+      sheetBody.appendChild(tr);
+      nextRowNo.textContent = rowCount + 1;
+      namebox.textContent = `D${rowCount}`;
+      formulaInput.textContent = msg.text ? `=${JSON.stringify(msg.text)}` : "";
       scrollToBottom();
     }
 
@@ -457,7 +662,7 @@
         inputEl.value = "";
         resizeTextarea();
       } catch (err) {
-        alert("메시지 전송에 실패했습니다. Firebase 규칙 또는 인터넷 연결을 확인하세요.");
+        alert("입력값 저장에 실패했습니다. Firebase 규칙 또는 인터넷 연결을 확인하세요.");
         console.error(err);
       } finally {
         sendEl.disabled = false;
@@ -479,7 +684,7 @@
 
     function resizeTextarea() {
       inputEl.style.height = "auto";
-      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 96) + "px";
     }
 
     inputEl.addEventListener("input", resizeTextarea);
